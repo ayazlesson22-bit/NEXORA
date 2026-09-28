@@ -78,6 +78,103 @@ function getNumericPrice(product) {
 }
 
 /* ========================================================
+   PRODUCT NORMALIZER (SUPABASE SCHEMA ADAPTER)
+   ======================================================== */
+function normalizeProduct(raw) {
+    if (!raw) return null;
+
+    // Parse PKR price from raw.price_pkr or raw.price
+    let pricePkr = 0;
+    if (raw.price_pkr !== undefined && raw.price_pkr !== null && !isNaN(raw.price_pkr)) {
+        pricePkr = parseFloat(raw.price_pkr);
+    } else if (raw.price !== undefined && raw.price !== null) {
+        const cleanStr = String(raw.price).replace(/,/g, '').replace(/[^0-9.]/g, '');
+        pricePkr = parseFloat(cleanStr) || 0;
+    }
+
+    // Parse USD price from raw.price_usd or convert from PKR
+    let priceUsd = 0;
+    if (raw.price_usd !== undefined && raw.price_usd !== null && !isNaN(raw.price_usd)) {
+        priceUsd = parseFloat(raw.price_usd);
+    } else {
+        priceUsd = pricePkr > 0 ? Math.round(pricePkr / (StoreState.usdToPkrRate || 280)) : 0;
+    }
+
+    // Derive Brand from raw.brand or parse from product name
+    let brand = raw.brand || '';
+    if (!brand && raw.name) {
+        const n = raw.name.toUpperCase();
+        if (n.includes('SONY') || n.includes('PLAYSTATION') || n.includes('PS5')) brand = 'Sony';
+        else if (n.includes('LENOVO') || n.includes('LEGION')) brand = 'Lenovo';
+        else if (n.includes('APPLE') || n.includes('MACBOOK') || n.includes('IPHONE') || n.includes('IPAD')) brand = 'Apple';
+        else if (n.includes('SAMSUNG') || n.includes('GALAXY')) brand = 'Samsung';
+        else if (n.includes('ASUS') || n.includes('ROG') || n.includes('TUF')) brand = 'ASUS';
+        else if (n.includes('DELL') || n.includes('ALIENWARE')) brand = 'Dell';
+        else if (n.includes('LOGITECH')) brand = 'Logitech';
+        else if (n.includes('KEYCHRON')) brand = 'Keychron';
+        else if (n.includes('BOSE')) brand = 'Bose';
+        else if (n.includes('DJI')) brand = 'DJI';
+        else brand = raw.category || 'NEXORA';
+    }
+
+    // Normalize category
+    let category = raw.category || 'Flagship';
+    const catLower = category.toLowerCase().trim();
+    if (catLower.includes('laptop')) category = 'Laptops';
+    else if (catLower.includes('game') || catLower.includes('gaming') || catLower.includes('ps5')) category = 'Gaming';
+    else if (catLower.includes('phone') || catLower.includes('mobile') || catLower.includes('smart')) category = 'Smartphones';
+    else if (catLower.includes('audio') || catLower.includes('sound') || catLower.includes('headphone') || catLower.includes('earbud')) category = 'Audio';
+    else if (catLower.includes('tablet') || catLower.includes('ipad')) category = 'Tablets';
+    else if (catLower.includes('monitor') || catLower.includes('display')) category = 'Monitors';
+    else if (catLower.includes('drone') || catLower.includes('camera')) category = 'Drones & Cameras';
+    else if (catLower.includes('access')) category = 'Accessories';
+
+    // Parse specs safely
+    let specs = raw.specs;
+    if (typeof specs === 'string') {
+        try { specs = JSON.parse(specs); } catch(e) { specs = {}; }
+    } else if (Array.isArray(specs)) {
+        const specsObj = {};
+        specs.forEach((s, idx) => {
+            if (typeof s === 'string' && s.includes(':')) {
+                const parts = s.split(':');
+                specsObj[parts[0].trim()] = parts.slice(1).join(':').trim();
+            } else if (typeof s === 'object' && s !== null) {
+                Object.assign(specsObj, s);
+            } else if (s) {
+                specsObj[`Feature ${idx+1}`] = String(s);
+            }
+        });
+        specs = specsObj;
+    }
+
+    const description = raw.description || raw.tagline || 'Official Brand Sealed Hardware with 1-Year NEXORA Official Warranty.';
+    const image_url = raw.image_url || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+
+    return {
+        id: raw.id,
+        name: raw.name || 'Flagship Device',
+        brand: brand,
+        category: category,
+        raw_category: raw.category,
+        price_pkr: pricePkr,
+        price_usd: priceUsd,
+        original_price_pkr: raw.original_price_pkr || (pricePkr > 0 ? Math.round(pricePkr * 1.1) : null),
+        original_price_usd: raw.original_price_usd || (priceUsd > 0 ? Math.round(priceUsd * 1.1) : null),
+        stock_quantity: raw.stock_quantity !== undefined ? raw.stock_quantity : 25,
+        in_stock: raw.in_stock !== undefined ? raw.in_stock : true,
+        badge: raw.badge || raw.tagline || 'Official Flagship',
+        image_url: image_url,
+        description: description,
+        short_desc: raw.tagline || description.replace(/\n/g, ' ').substring(0, 95) + '...',
+        specs: specs || {},
+        rating: raw.rating || 4.9,
+        reviews_count: raw.reviews_count || 120,
+        is_featured: !!raw.is_featured
+    };
+}
+
+/* ========================================================
    PRODUCT CATALOG LOADING & RENDERING
    ======================================================== */
 async function loadProductsCatalog() {
@@ -87,13 +184,18 @@ async function loadProductsCatalog() {
     grid.innerHTML = `
         <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem;">
             <div class="spinner-blue" style="margin: 0 auto 1rem auto; width: 44px; height: 44px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-            <p style="color: #64748b; font-weight: 600;">Loading verified tech hardware catalog...</p>
+            <p style="color: #64748b; font-weight: 600;">Connecting to Supabase Database & Loading Products...</p>
         </div>
     `;
 
-    let loaded = false;
+    let rawProducts = [];
 
-    // Try fetching from Supabase first
+    // Ensure Supabase is initialized
+    if (!window.supabaseClient && typeof initSupabase === 'function') {
+        initSupabase();
+    }
+
+    // 1. Try Supabase Client
     if (window.supabaseClient) {
         try {
             const { data, error } = await window.supabaseClient
@@ -101,21 +203,48 @@ async function loadProductsCatalog() {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (!error && data && data.length > 0) {
-                StoreState.products = data;
-                loaded = true;
-                console.log(`⚡ NEXORA: Loaded ${data.length} products from Supabase Database.`);
+            if (!error && Array.isArray(data) && data.length > 0) {
+                rawProducts = data;
+                console.log(`⚡ NEXORA: Loaded ${data.length} products via Supabase Client!`);
             }
         } catch (err) {
-            console.warn('Supabase fetch failed, falling back to local catalog:', err);
+            console.warn('Supabase client fetch error:', err);
         }
     }
 
-    // Fallback to verified REAL_TECH_PRODUCTS
-    if (!loaded) {
-        StoreState.products = [...REAL_TECH_PRODUCTS];
-        console.log(`📦 NEXORA: Loaded ${REAL_TECH_PRODUCTS.length} verified real tech products from local catalog.`);
+    // 2. Direct REST Fallback (Guaranteed to work if client had any network hiccup)
+    if (rawProducts.length === 0) {
+        try {
+            const restUrl = 'https://mlhgxsdjigumwwiukxnu.supabase.co/rest/v1/products?select=*';
+            const res = await fetch(restUrl, {
+                headers: {
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1saGd4c2RqaWd1bXd3aXVreG51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODk0OTIsImV4cCI6MjEwNjE2NTQ5Mn0.lnngXUgLL4buVXU0WsFEpPke4mmCdsuXtFOAjUSikiM',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1saGd4c2RqaWd1bXd3aXVreG51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODk0OTIsImV4cCI6MjEwNjE2NTQ5Mn0.lnngXUgLL4buVXU0WsFEpPke4mmCdsuXtFOAjUSikiM'
+                }
+            });
+            if (res.ok) {
+                const restData = await res.json();
+                if (Array.isArray(restData) && restData.length > 0) {
+                    rawProducts = restData;
+                    console.log(`⚡ NEXORA: Loaded ${restData.length} products via Direct Supabase REST!`);
+                }
+            }
+        } catch (restErr) {
+            console.warn('Direct REST fetch failed:', restErr);
+        }
     }
+
+    // 3. Merge with any local custom products
+    const localCustom = JSON.parse(localStorage.getItem('nexora_custom_products')) || [];
+    localCustom.forEach(item => {
+        if (!rawProducts.some(p => String(p.id) === String(item.id) || p.name === item.name)) {
+            rawProducts.push(item);
+        }
+    });
+
+    // 4. Normalize every product to ensure full compatibility
+    StoreState.products = rawProducts.map(normalizeProduct).filter(Boolean);
+    console.log(`🎯 NEXORA: Total active products ready for display: ${StoreState.products.length}`);
 
     renderProducts();
 }
@@ -125,12 +254,24 @@ function renderProducts() {
     if (!grid) return;
 
     let filtered = StoreState.products.filter(product => {
-        const matchesCategory = StoreState.currentCategory === 'All' || product.category === StoreState.currentCategory;
+        // Category match: case-insensitive and flexible
+        const selectedCat = StoreState.currentCategory.toLowerCase().trim();
+        const prodCat = (product.category || '').toLowerCase().trim();
+        const rawCat = (product.raw_category || '').toLowerCase().trim();
+
+        let matchesCategory = (StoreState.currentCategory === 'All') ||
+            prodCat === selectedCat ||
+            rawCat === selectedCat ||
+            (selectedCat.includes('laptop') && (prodCat.includes('laptop') || rawCat.includes('laptop'))) ||
+            (selectedCat.includes('gaming') && (prodCat.includes('gaming') || rawCat.includes('gaming') || prodCat.includes('game'))) ||
+            (selectedCat.includes('phone') && (prodCat.includes('phone') || rawCat.includes('phone') || prodCat.includes('smart')));
+
         const q = StoreState.searchQuery.toLowerCase().trim();
         const matchesSearch = !q || 
             product.name.toLowerCase().includes(q) || 
             product.brand.toLowerCase().includes(q) ||
             product.category.toLowerCase().includes(q) ||
+            (product.raw_category && product.raw_category.toLowerCase().includes(q)) ||
             (product.description && product.description.toLowerCase().includes(q));
 
         return matchesCategory && matchesSearch;

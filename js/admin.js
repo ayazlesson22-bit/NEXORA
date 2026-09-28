@@ -374,7 +374,19 @@ async function handleSaveProduct(e) {
         specs = { "Info": document.getElementById('prod-specs').value };
     }
 
-    const productPayload = {
+    // Format payload matching Supabase products table schema
+    const supabasePayload = {
+        name: name,
+        price: String(pricePkr),
+        category: category,
+        description: desc,
+        image_url: imageUrl,
+        badge: badge || 'Flagship',
+        specs: specs
+    };
+
+    const localProduct = {
+        id: editId || ('nexora-' + Date.now()),
         name,
         brand,
         category,
@@ -391,27 +403,40 @@ async function handleSaveProduct(e) {
     // If Supabase is available, sync
     if (window.supabaseClient) {
         try {
-            if (editId) {
-                await window.supabaseClient.from('products').update(productPayload).eq('id', editId);
+            if (editId && !isNaN(Number(editId))) {
+                const { error } = await window.supabaseClient.from('products').update(supabasePayload).eq('id', Number(editId));
+                if (error) console.warn('Supabase update warning:', error.message);
             } else {
-                await window.supabaseClient.from('products').insert([productPayload]);
+                // Generate a safe unique numeric ID for primary key if needed
+                const safeId = Math.floor(Date.now() / 1000) % 2147483647;
+                const { data, error } = await window.supabaseClient.from('products').insert([{ id: safeId, ...supabasePayload }]);
+                if (error) console.warn('Supabase insert warning:', error.message);
+                else if (data && data[0]) localProduct.id = data[0].id;
             }
         } catch(err) {
             console.warn('Supabase product sync warning:', err);
         }
     }
 
+    // Local storage persistence
+    const localCustom = JSON.parse(localStorage.getItem('nexora_custom_products')) || [];
+    if (editId) {
+        const cIdx = localCustom.findIndex(p => String(p.id) === String(editId));
+        if (cIdx > -1) localCustom[cIdx] = localProduct;
+        else localCustom.push(localProduct);
+    } else {
+        localCustom.unshift(localProduct);
+    }
+    localStorage.setItem('nexora_custom_products', JSON.stringify(localCustom));
+
     // Local state update
     if (editId) {
         const idx = adminState.products.findIndex(p => String(p.id) === String(editId));
         if (idx > -1) {
-            adminState.products[idx] = { ...adminState.products[idx], ...productPayload };
+            adminState.products[idx] = { ...adminState.products[idx], ...localProduct };
         }
     } else {
-        adminState.products.unshift({
-            id: 'nexora-' + Date.now(),
-            ...productPayload
-        });
+        adminState.products.unshift(localProduct);
     }
 
     closeProductFormModal();
