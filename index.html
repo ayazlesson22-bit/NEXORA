@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXORA | Premium Tech & Next-Gen Flagship Hardware</title>
+    <meta name="description" content="Discover flagship laptops, smartphones, high-resolution audio, and computing hardware from Apple, Sony, Samsung, and ASUS at NEXORA.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/></svg>">
+    
+    <!-- Supabase JS Client v2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ================= ANNOUNCEMENT BAR ================= -->
+    <div class="announcement-bar">
+        <div class="container announcement-content">
+            <div>
+                <span class="announcement-badge">GLOBAL & LOCAL</span>
+                Free Express Delivery across Pakistan & Worldwide &bull; 100% Authentic Brand Sealed Tech
+            </div>
+            <div class="announcement-links">
+                <a href="#catalog-section">Shop Flagships</a>
+                <span>|</span>
+                <a href="admin.html">Admin Portal</a>
+                <span>|</span>
+                <a href="checkout.html">Direct Checkout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN HEADER ================= -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <!-- Brand Logo -->
+            <a href="index.html" class="brand-logo" aria-label="NEXORA Home">
+                <div class="brand-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </div>
+                <div class="brand-text">NEX<span>ORA</span></div>
+            </a>
+
+            <!-- Search Bar -->
+            <div class="header-search">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search tech products, brands, models..." autocomplete="off">
+                    <button id="search-clear-btn" class="search-clear-btn" title="Clear search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="header-actions">
+                <!-- Currency Toggle (PKR / USD) -->
+                <div class="currency-switcher" title="Toggle International Currency">
+                    <button class="currency-btn active" data-currency="PKR">PKR (₨)</button>
+                    <button class="currency-btn" data-currency="USD">USD ($)</button>
+                </div>
+
+                <!-- User / Auth Button -->
+                <button class="user-btn" id="header-user-btn" onclick="openAuthModal()" title="Account & Sign In">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span id="header-user-name">Account</span>
+                </button>
+
+                <!-- Wishlist Icon -->
+                <button class="action-btn" onclick="openWishlistDrawer()" title="Wishlist" aria-label="Open Wishlist">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                    <span class="badge-count" id="header-wishlist-count" style="display: none;">0</span>
+                </button>
+
+                <!-- Cart Icon -->
+                <button class="action-btn" onclick="openCartDrawer()" title="Cart" aria-label="Open Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <span class="badge-count" id="header-cart-count" style="display: none;">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Secondary Categories Navigation -->
+        <nav class="secondary-nav">
+            <div class="container">
+                <ul class="nav-links">
+                    <li><a href="#catalog-section" class="active"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> All Catalog</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Laptops')">Laptops & MacBooks</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Smartphones')">Smartphones</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Audio')">Hi-Fi Audio</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Tablets')">iPads & Tablets</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Accessories')">Mechanical & Mice</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Monitors')">6K Displays</a></li>
+                    <li><a href="#catalog-section" onclick="filterByNavCategory('Gaming')">Gaming & PS5</a></li>
+                    <li style="margin-left: auto;">
+                        <a href="admin.html" class="admin-link-pill">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            Admin Dashboard
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ================= HERO SECTION ================= -->
+    <section class="hero-section">
+        <div class="hero-glow-1"></div>
+        <div class="container hero-grid">
+            <div class="hero-text">
+                <div class="hero-tag">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                    2026 FLAGSHIP TECH ARRIVALS
+                </div>
+                <h1 class="hero-title">
+                    Engineered for Precision. <span>Built for Tomorrow.</span>
+                </h1>
+                <p class="hero-desc">
+                    Experience authentic, high-performance technology. Explore premium workstations, flagship smartphones, audiophile sound, and creator electronics. Backed by full official warranty and dual-currency support in PKR and USD.
+                </p>
+
+                <div class="hero-cta-group">
+                    <a href="#catalog-section" class="btn-primary">
+                        <span>Explore Flagships</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                    <a href="checkout.html" class="btn-outline">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        <span>Direct Checkout</span>
+                    </a>
+                </div>
+
+                <!-- Trust Badges Row -->
+                <div class="trust-badges-row">
+                    <div class="trust-item">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span>100% Genuine Hardware</span>
+                    </div>
+                    <div class="trust-item">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                        <span>Fast Express Courier</span>
+                    </div>
+                    <div class="trust-item">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                        <span>24/7 Priority Support</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Featured Showcase Card -->
+            <div class="hero-card">
+                <div class="hero-card-floating-badge">⚡ Supabase Connected</div>
+                <div class="hero-card-img-wrap" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; text-align: center; padding: 2rem;">
+                    <div class="brand-icon-box" style="width: 68px; height: 68px; margin-bottom: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                        </svg>
+                    </div>
+                    <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.45rem; font-weight: 800; color: #ffffff; margin-bottom: 0.4rem;">NEXORA TECH</h3>
+                    <p style="font-size: 0.85rem; color: #bfdbfe;">Custom Cloud Inventory Ready</p>
+                </div>
+                <div class="hero-card-info">
+                    <span class="badge-tech">Cloud Store</span>
+                    <h3 style="margin-top: 0.5rem;">Add & Manage Your Products</h3>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.35rem;">Manage real tech devices, stock, and dual currency pricing in PKR and USD from the Admin Panel.</p>
+                    <div class="hero-card-price-row">
+                        <a href="admin.html" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem;">
+                            <span>Open Admin Panel</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= VALUE PROPOSITION STRIP ================= -->
+    <section class="features-strip">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                    </div>
+                    <div class="feature-info">
+                        <h4>4 Payment Options</h4>
+                        <p>Cash, Easypaisa, Direct Bank Transfer & Google Pay</p>
+                    </div>
+                </div>
+
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <div class="feature-info">
+                        <h4>Dual Currency (PKR & USD)</h4>
+                        <p>Instant seamless currency switcher across the entire store</p>
+                    </div>
+                </div>
+
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    <div class="feature-info">
+                        <h4>1 Year Official Warranty</h4>
+                        <p>Brand sealed hardware with verifiable manufacturer warranty</p>
+                    </div>
+                </div>
+
+                <div class="feature-box">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="feature-info">
+                        <h4>Guest or Account Checkout</h4>
+                        <p>Order freely without registration, or save history with Supabase</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= CATALOG SECTION ================= -->
+    <section class="categories-section" id="catalog-section">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Verified Tech Hardware</h2>
+                    <p class="section-subtitle">Real authentic electronics with genuine performance benchmarks.</p>
+                </div>
+
+                <!-- Category Tabs -->
+                <div class="category-tabs">
+                    <button class="cat-tab-btn active" data-category="All">All Hardware</button>
+                    <button class="cat-tab-btn" data-category="Laptops">Laptops</button>
+                    <button class="cat-tab-btn" data-category="Smartphones">Smartphones</button>
+                    <button class="cat-tab-btn" data-category="Audio">Hi-Fi Audio</button>
+                    <button class="cat-tab-btn" data-category="Tablets">Tablets</button>
+                    <button class="cat-tab-btn" data-category="Monitors">6K Displays</button>
+                    <button class="cat-tab-btn" data-category="Accessories">Accessories</button>
+                    <button class="cat-tab-btn" data-category="Gaming">Gaming & PS5</button>
+                    <button class="cat-tab-btn" data-category="Drones & Cameras">Drones</button>
+                </div>
+            </div>
+
+            <!-- Filter & Sort Bar -->
+            <div class="filter-bar">
+                <div class="results-count">
+                    Showing <strong id="catalog-count">12</strong> verified hardware models
+                </div>
+
+                <div class="sort-select-wrapper">
+                    <label for="sort-select" style="font-weight: 600; color: #475569; font-size: 0.85rem;">Sort by:</label>
+                    <select id="sort-select" class="sort-select">
+                        <option value="featured">Featured First</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="rating">Highest Rated</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid" id="products-grid">
+                <!-- Dynamically populated via store.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= BRAND GUARANTEE PROMO ================= -->
+    <section style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: #ffffff; padding: 4.5rem 0; margin-top: 2rem;">
+        <div class="container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem;">
+            <div style="max-width: 650px;">
+                <span style="background: rgba(255, 255, 255, 0.2); padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Authenticity Promise</span>
+                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 2.3rem; font-weight: 800; margin: 0.75rem 0; line-height: 1.2;">Zero Counterfeit. Zero Dummy Specs.</h2>
+                <p style="color: #bfdbfe; font-size: 1.05rem; line-height: 1.6;">Every product sold on NEXORA comes with verified serial numbers, factory seal intact, and official warranty. Connected to Supabase real-time database.</p>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="checkout.html" class="btn-primary" style="background: #ffffff; color: #1e3a8a; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);">
+                    <span>Proceed to Checkout</span>
+                </a>
+                <a href="admin.html" class="btn-outline" style="background: transparent; color: #ffffff; border-color: rgba(255, 255, 255, 0.4);">
+                    <span>Manage via Admin</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= SITE FOOTER ================= -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <!-- Col 1: Brand Info -->
+                <div class="footer-brand">
+                    <a href="index.html" class="brand-logo" style="color: #ffffff;">
+                        <div class="brand-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        </div>
+                        <div class="brand-text">NEX<span style="color: #60a5fa;">ORA</span></div>
+                    </a>
+                    <p class="footer-desc">
+                        NEXORA is a premier tech electronics retailer supplying flagship computing workstations, flagship smartphones, audiophile equipment, and creator gear.
+                    </p>
+                    <div style="font-size: 0.825rem; color: #94a3b8;">
+                        <strong>Supabase Project:</strong> <code style="background: #1e293b; padding: 0.2rem 0.4rem; border-radius: 4px; color: #38bdf8;">mlhgxsdjigumwwiukxnu</code>
+                    </div>
+                </div>
+
+                <!-- Col 2: Categories -->
+                <div>
+                    <h4 class="footer-heading">Categories</h4>
+                    <ul class="footer-links">
+                        <li><a href="#catalog-section" onclick="filterByNavCategory('Laptops')">Laptops & MacBooks</a></li>
+                        <li><a href="#catalog-section" onclick="filterByNavCategory('Smartphones')">Smartphones</a></li>
+                        <li><a href="#catalog-section" onclick="filterByNavCategory('Audio')">Noise Canceling Audio</a></li>
+                        <li><a href="#catalog-section" onclick="filterByNavCategory('Tablets')">iPads & OLED Tablets</a></li>
+                        <li><a href="#catalog-section" onclick="filterByNavCategory('Monitors')">6K Displays</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Customer Care -->
+                <div>
+                    <h4 class="footer-heading">Customer Care</h4>
+                    <ul class="footer-links">
+                        <li><a href="checkout.html">Track Order</a></li>
+                        <li><a href="#catalog-section">Warranty Terms</a></li>
+                        <li><a href="#catalog-section">Shipping Rates (PKR & USD)</a></li>
+                        <li><a href="#catalog-section">Return Policy (7 Days)</a></li>
+                        <li><a href="admin.html">Admin Panel</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: International Currencies -->
+                <div>
+                    <h4 class="footer-heading">Currencies</h4>
+                    <ul class="footer-links">
+                        <li><a href="javascript:void(0)" onclick="setCurrency('PKR')">🇵🇰 Pakistani Rupee (PKR)</a></li>
+                        <li><a href="javascript:void(0)" onclick="setCurrency('USD')">🇺🇸 US Dollar (USD)</a></li>
+                    </ul>
+                    <div style="margin-top: 1rem; font-size: 0.8rem; color: #94a3b8;">
+                        Default Exchange Rate:<br>
+                        <span style="color: #60a5fa; font-weight: 700;">1 USD = 280 PKR</span>
+                    </div>
+                </div>
+
+                <!-- Col 5: Payment Methods -->
+                <div>
+                    <h4 class="footer-heading">Supported Payments</h4>
+                    <p style="font-size: 0.825rem; color: #94a3b8; margin-bottom: 0.75rem;">
+                        We accept local Pakistani mobile payments and international methods:
+                    </p>
+                    <div class="payment-icons-strip">
+                        <span class="payment-pill">💵 Cash on Delivery</span>
+                        <span class="payment-pill">🟢 Easypaisa</span>
+                        <span class="payment-pill">🏦 Bank Transfer</span>
+                        <span class="payment-pill">🌐 Google Pay</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div>
+                    &copy; 2026 NEXORA Tech Ltd. All rights reserved. 100% Genuine Flagship Tech.
+                </div>
+                <div>
+                    Powered by <strong style="color: #38bdf8;">Supabase</strong> &bull; Light Blue Theme
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= CART DRAWER ================= -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+    <aside class="cart-drawer" id="cart-drawer" aria-label="Shopping Cart">
+        <div class="drawer-header">
+            <h3 class="drawer-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Your Tech Cart
+            </h3>
+            <button class="btn-close-drawer" onclick="closeCartDrawer()" aria-label="Close cart">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div class="free-shipping-bar">
+            <span>🎉 Express Delivery: <strong>FREE on all orders</strong></span>
+            <div class="shipping-progress-track">
+                <div class="shipping-progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="drawer-body" id="cart-drawer-items">
+            <!-- Dynamically populated via store.js -->
+        </div>
+
+        <div class="drawer-footer" id="cart-drawer-footer">
+            <div class="drawer-summary-row">
+                <span>Subtotal</span>
+                <span id="cart-subtotal-price" style="font-weight: 700; color: #0f172a;">PKR 0</span>
+            </div>
+            <div class="drawer-summary-row">
+                <span>Shipping</span>
+                <span style="color: #10b981; font-weight: 700;">FREE</span>
+            </div>
+            <div class="drawer-summary-row total">
+                <span>Estimated Total</span>
+                <span class="total-price" id="cart-total-price">PKR 0</span>
+            </div>
+            <a href="checkout.html" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.9rem;">
+                <span>Proceed to Checkout</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ================= WISHLIST DRAWER ================= -->
+    <aside class="wishlist-drawer" id="wishlist-drawer" aria-label="Saved Wishlist">
+        <div class="drawer-header">
+            <h3 class="drawer-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                Saved Wishlist
+            </h3>
+            <button class="btn-close-drawer" onclick="closeWishlistDrawer()" aria-label="Close wishlist">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div class="drawer-body" id="wishlist-drawer-items">
+            <!-- Dynamically populated via store.js -->
+        </div>
+    </aside>
+
+    <!-- ================= PRODUCT QUICK VIEW MODAL ================= -->
+    <div class="modal-backdrop" id="product-modal">
+        <div class="product-modal-dialog">
+            <button class="modal-close-btn" onclick="closeProductModal()" aria-label="Close modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <div class="modal-scrollable-content">
+                <div class="modal-grid">
+                    <div class="modal-gallery">
+                        <div class="modal-main-img-wrap">
+                            <img id="modal-img" src="" alt="Product Detail">
+                        </div>
+                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 0.85rem; font-size: 0.8rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            <span>100% Brand Sealed &bull; 1 Year Official NEXORA Warranty</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-details">
+                        <span class="modal-brand" id="modal-brand">BRAND</span>
+                        <h2 class="modal-title" id="modal-title">Product Name</h2>
+
+                        <div class="modal-price-row">
+                            <span class="modal-price" id="modal-price">PKR 0</span>
+                            <span class="modal-original-price" id="modal-orig-price" style="display: none;">PKR 0</span>
+                        </div>
+
+                        <p class="modal-desc" id="modal-desc"></p>
+
+                        <h4 style="font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #0f172a; margin-bottom: 0.65rem;">
+                            Verified Hardware Specifications
+                        </h4>
+                        <table class="specs-table" id="modal-specs-table">
+                            <!-- Populated dynamically -->
+                        </table>
+
+                        <div class="modal-actions-row">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; background: #f1f5f9; padding: 0.35rem 0.75rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <label for="modal-qty-input" style="font-size: 0.8rem; font-weight: 700; color: #475569;">Qty:</label>
+                                <input type="number" id="modal-qty-input" value="1" min="1" max="10" style="width: 48px; border: none; background: transparent; font-weight: 700; font-size: 0.95rem; text-align: center;">
+                            </div>
+                            <button class="btn-primary" id="modal-add-cart-btn" style="flex: 1; justify-content: center;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                                <span>Add to Cart</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= AUTH MODAL (SUPABASE / GUEST) ================= -->
+    <div class="modal-backdrop" id="auth-modal">
+        <div class="auth-modal-dialog">
+            <button class="modal-close-btn" onclick="closeAuthModal()" aria-label="Close modal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            <div class="auth-header">
+                <div class="brand-icon-box" style="margin: 0 auto 0.75rem auto;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                </div>
+                <h3>Welcome to NEXORA</h3>
+                <p>Sign in with Supabase or continue freely as a guest customer.</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+                <button class="auth-tab-btn" id="tab-signup" onclick="switchAuthTab('signup')">Create Account</button>
+            </div>
+
+            <div id="auth-error-msg" style="display: none; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.8rem; margin-bottom: 1rem;"></div>
+
+            <form id="auth-form" onsubmit="submitAuthForm(event)">
+                <div class="form-group">
+                    <label for="auth-email">Email Address</label>
+                    <input type="email" id="auth-email" class="form-control" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="auth-password">Password</label>
+                    <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn-primary" id="auth-submit-btn" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+                    Sign In
+                </button>
+            </form>
+
+            <div style="margin-top: 1.5rem; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                <p style="font-size: 0.825rem; color: #64748b; margin-bottom: 0.5rem;">No account? You can still shop and checkout directly!</p>
+                <button onclick="closeAuthModal()" class="btn-outline" style="width: 100%; font-size: 0.85rem; padding: 0.6rem;">
+                    Continue as Guest Customer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/supabase-config.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/store.js"></script>
+
+    <script>
+        // Secondary navigation helper to filter categories
+        function filterByNavCategory(category) {
+            StoreState.currentCategory = category;
+            document.querySelectorAll('.cat-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === category);
+            });
+            renderProducts();
+        }
+
+        // Auth Tabs Toggle
+        let currentAuthMode = 'login';
+        function switchAuthTab(mode) {
+            currentAuthMode = mode;
+            document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+            document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+            document.getElementById('auth-submit-btn').innerText = mode === 'login' ? 'Sign In' : 'Create Free Account';
+            document.getElementById('auth-error-msg').style.display = 'none';
+        }
+
+        function submitAuthForm(e) {
+            if (currentAuthMode === 'login') {
+                handleSignIn(e);
+            } else {
+                handleSignUp(e);
+            }
+        }
+    </script>
+</body>
+</html>

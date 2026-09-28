@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout | NEXORA Tech Hardware</title>
+    <meta name="description" content="Complete your purchase of authentic flagship electronics securely at NEXORA. Supporting Cash, Easypaisa, Bank Transfer and Google Pay.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/></svg>">
+    
+    <!-- Supabase JS Client v2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .checkout-page {
+            padding: 3rem 0 5rem 0;
+            background: #f8fafc;
+            min-height: 80vh;
+        }
+
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 2.5rem;
+            align-items: flex-start;
+        }
+
+        .checkout-card {
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.75rem;
+        }
+
+        .checkout-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .checkout-card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .header-step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 0.85rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        /* Payment Option Selectors */
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-choice-card {
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            cursor: pointer;
+            transition: var(--transition);
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .payment-choice-card:hover {
+            border-color: var(--primary-subtle);
+            background: var(--primary-light);
+        }
+
+        .payment-choice-card.active {
+            border-color: var(--primary);
+            background: #eff6ff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .payment-radio-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-choice-card.active .payment-radio-circle {
+            border-color: var(--primary);
+        }
+
+        .payment-choice-card.active .payment-radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .payment-choice-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .payment-choice-subtitle {
+            font-size: 0.775rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        /* Payment Detail Panels */
+        .payment-details-panel {
+            background: var(--bg-alt);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .payment-details-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bank-info-box {
+            background: #ffffff;
+            border: 1px solid #bfdbfe;
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .bank-info-box table {
+            width: 100%;
+        }
+
+        .bank-info-box td {
+            padding: 0.3rem 0;
+        }
+
+        .bank-info-box td:first-child {
+            color: var(--text-secondary);
+            font-weight: 600;
+            width: 35%;
+        }
+
+        .bank-info-box td:last-child {
+            color: var(--primary-dark);
+            font-weight: 700;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Order Summary Sticky */
+        .summary-sticky {
+            position: sticky;
+            top: 6.5rem;
+        }
+
+        .summary-item-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .summary-item-img {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            background: var(--bg-alt);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .summary-item-img img {
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .summary-item-info {
+            flex: 1;
+        }
+
+        .summary-item-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .summary-item-qty {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .summary-item-price {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* Order Placed Success View */
+        .order-success-dialog {
+            background: #ffffff;
+            border-radius: var(--radius-xl);
+            padding: 3rem 2rem;
+            text-align: center;
+            max-width: 650px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-light);
+        }
+
+        .success-icon-box {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #dcfce7;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+        }
+
+        @media (max-width: 900px) {
+            .checkout-grid {
+                grid-template-columns: 1fr;
+            }
+            .payment-methods-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= SIMPLE SECURE HEADER ================= -->
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="index.html" class="brand-logo" aria-label="NEXORA Home">
+                <div class="brand-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                </div>
+                <div class="brand-text">NEX<span>ORA</span></div>
+            </a>
+
+            <!-- Security Badge & Currency Switcher -->
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="currency-switcher" title="Toggle International Currency">
+                    <button class="currency-btn active" data-currency="PKR">PKR (₨)</button>
+                    <button class="currency-btn" data-currency="USD">USD ($)</button>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.825rem; font-weight: 700; color: #10b981; background: #ecfdf5; padding: 0.4rem 0.85rem; border-radius: 9999px; border: 1px solid #a7f3d0;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>Supabase Secured</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= MAIN CHECKOUT CONTENT ================= -->
+    <main class="checkout-page">
+        <div class="container" id="checkout-main-container">
+            <div style="margin-bottom: 2rem;">
+                <a href="index.html" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; font-weight: 700; color: var(--primary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    Back to Tech Catalog
+                </a>
+                <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 2.2rem; font-weight: 800; margin-top: 0.5rem;">
+                    Express Secure Checkout
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                    Checkout securely with or without signing in. Select your preferred payment method below.
+                </p>
+            </div>
+
+            <form id="checkout-form" onsubmit="handlePlaceOrder(event)">
+                <div class="checkout-grid">
+                    <!-- LEFT COLUMN: Forms -->
+                    <div class="checkout-left">
+                        <!-- Step 1: Contact Information (Guest or Signed In) -->
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="header-step-num">1</div>
+                                <h3>Customer & Contact Details</h3>
+                            </div>
+
+                            <div id="auth-status-banner" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #1e40af; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span id="auth-status-text">👤 Checking account status...</span>
+                                <a href="index.html" style="font-weight: 700; text-decoration: underline;">Switch Account</a>
+                            </div>
+
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label for="cust-name">Full Name *</label>
+                                    <input type="text" id="cust-name" class="form-control" placeholder="Muhammad Hamza" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cust-email">Email Address (for Receipt & Tracking) *</label>
+                                    <input type="email" id="cust-email" class="form-control" placeholder="hamza@tech.com" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cust-phone">Active Phone Number (for Courier & Verification) *</label>
+                                <input type="tel" id="cust-phone" class="form-control" placeholder="+92 300 1234567" required>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Delivery Address -->
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="header-step-num">2</div>
+                                <h3>Shipping & Delivery Address</h3>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cust-address">Street Address, Suite / Apartment *</label>
+                                <input type="text" id="cust-address" class="form-control" placeholder="House # 42, Street 10, Sector F-7/2 or Suite 804" required>
+                            </div>
+
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label for="cust-city">City *</label>
+                                    <input type="text" id="cust-city" class="form-control" placeholder="Islamabad / Lahore / Karachi / New York" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cust-country">Country *</label>
+                                    <select id="cust-country" class="form-control" required>
+                                        <option value="Pakistan" selected>Pakistan (Free Courier)</option>
+                                        <option value="United States">United States (USD)</option>
+                                        <option value="United Arab Emirates">United Arab Emirates</option>
+                                        <option value="United Kingdom">United Kingdom</option>
+                                        <option value="Canada">Canada</option>
+                                        <option value="International">Other International Destination</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="cust-notes">Courier Delivery Instructions (Optional)</label>
+                                <input type="text" id="cust-notes" class="form-control" placeholder="e.g. Call before arrival, leave with security gate">
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Payment Method (Cash, Easypaisa, Bank, Google Pay) -->
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="header-step-num">3</div>
+                                <h3>Payment Method</h3>
+                            </div>
+
+                            <div class="payment-methods-grid">
+                                <!-- Cash on Delivery -->
+                                <div class="payment-choice-card active" data-method="cash" onclick="selectPaymentMethod('cash')">
+                                    <div class="payment-radio-circle"></div>
+                                    <div class="payment-choice-title">
+                                        💵 Cash on Delivery
+                                    </div>
+                                    <div class="payment-choice-subtitle">
+                                        Pay with cash when the courier delivers your parcel.
+                                    </div>
+                                </div>
+
+                                <!-- Easypaisa -->
+                                <div class="payment-choice-card" data-method="easypaisa" onclick="selectPaymentMethod('easypaisa')">
+                                    <div class="payment-radio-circle"></div>
+                                    <div class="payment-choice-title">
+                                        🟢 Easypaisa Wallet
+                                    </div>
+                                    <div class="payment-choice-subtitle">
+                                        Instant transfer via Easypaisa Mobile App or Till.
+                                    </div>
+                                </div>
+
+                                <!-- Bank Wire -->
+                                <div class="payment-choice-card" data-method="bank" onclick="selectPaymentMethod('bank')">
+                                    <div class="payment-radio-circle"></div>
+                                    <div class="payment-choice-title">
+                                        🏦 Bank Transfer / Wire
+                                    </div>
+                                    <div class="payment-choice-subtitle">
+                                        Meezan Bank & Standard Chartered online transfer.
+                                    </div>
+                                </div>
+
+                                <!-- Google Pay -->
+                                <div class="payment-choice-card" data-method="google_pay" onclick="selectPaymentMethod('google_pay')">
+                                    <div class="payment-radio-circle"></div>
+                                    <div class="payment-choice-title">
+                                        🌐 Google Pay
+                                    </div>
+                                    <div class="payment-choice-subtitle">
+                                        Fast & secure 1-click checkout with Google Pay.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method Specific Dynamic Details -->
+                            <!-- Cash Details -->
+                            <div class="payment-details-panel active" id="panel-cash">
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+                                    Cash on Delivery (Doorstep Verification)
+                                </h4>
+                                <p style="font-size: 0.85rem; color: #64748b; line-height: 1.6;">
+                                    Please keep the exact cash ready at your delivery address. Our express courier rider will provide an official NEXORA physical receipt with sealed warranty validation upon handing over your brand new package.
+                                </p>
+                            </div>
+
+                            <!-- Easypaisa Details -->
+                            <div class="payment-details-panel" id="panel-easypaisa">
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+                                    Easypaisa Direct Account Transfer
+                                </h4>
+                                <div class="bank-info-box">
+                                    <table>
+                                        <tr>
+                                            <td>Account Title:</td>
+                                            <td>NEXORA TECH (PVT) LTD</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Easypaisa Mobile:</td>
+                                            <td>0300-8492019</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Account Type:</td>
+                                            <td>Official Merchant Business Account</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="form-group">
+                                    <label for="easypaisa-trx">Easypaisa 3737 / Transaction ID (TID) *</label>
+                                    <input type="text" id="easypaisa-trx" class="form-control" placeholder="e.g. 19283746501">
+                                </div>
+                            </div>
+
+                            <!-- Bank Transfer Details -->
+                            <div class="payment-details-panel" id="panel-bank">
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+                                    Online Bank Transfer / Raast / IBAN
+                                </h4>
+                                <div class="bank-info-box">
+                                    <table>
+                                        <tr>
+                                            <td>Bank Name:</td>
+                                            <td>Meezan Bank Ltd</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Account Title:</td>
+                                            <td>NEXORA TECHNOLOGIES PRIVATE LIMITED</td>
+                                        </tr>
+                                        <tr>
+                                            <td>IBAN Number:</td>
+                                            <td>PK65MEZN0001928374650192</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Branch Code:</td>
+                                            <td>0192 (Blue Area, Islamabad)</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bank-ref">Bank Transfer Reference / Sender Account Name *</label>
+                                    <input type="text" id="bank-ref" class="form-control" placeholder="e.g. Ref # 99281729 / Sender Name">
+                                </div>
+                            </div>
+
+                            <!-- Google Pay Details -->
+                            <div class="payment-details-panel" id="panel-google_pay">
+                                <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+                                    Google Pay Interactive Simulator
+                                </h4>
+                                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">
+                                    Pay securely using any card saved to your Google Account. Click below to authorize transaction.
+                                </p>
+                                <button type="button" class="btn-primary" onclick="simulateGooglePay()" style="background: #000000; border-radius: 8px; width: 100%; justify-content: center; padding: 0.85rem;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ffffff" style="margin-right: 0.5rem;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+                                    <span id="gpay-btn-label">Pay with Google Pay</span>
+                                </button>
+                                <input type="hidden" id="gpay-auth-token" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN: Order Summary -->
+                    <div class="checkout-right">
+                        <div class="checkout-card summary-sticky">
+                            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light);">
+                                Order Summary
+                            </h3>
+
+                            <!-- Order Items List -->
+                            <div id="checkout-items-list" style="margin-bottom: 1.25rem; max-height: 280px; overflow-y: auto;">
+                                <!-- Populated dynamically -->
+                            </div>
+
+                            <!-- Calculations -->
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.6rem; display: flex; justify-content: space-between;">
+                                <span>Subtotal</span>
+                                <span id="checkout-subtotal" style="font-weight: 700; color: var(--text-primary);">PKR 0</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.6rem; display: flex; justify-content: space-between;">
+                                <span>Express Insured Courier</span>
+                                <span style="color: #10b981; font-weight: 700;">FREE</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.25rem; display: flex; justify-content: space-between;">
+                                <span>1-Year Official Warranty</span>
+                                <span style="color: #10b981; font-weight: 700;">INCLUDED</span>
+                            </div>
+
+                            <div style="padding-top: 1rem; border-top: 2px solid var(--border-light); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: baseline;">
+                                <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">Grand Total:</span>
+                                <span id="checkout-grand-total" style="font-size: 1.6rem; font-weight: 800; color: var(--primary); font-family: 'Space Grotesk', sans-serif;">
+                                    PKR 0
+                                </span>
+                            </div>
+
+                            <button type="submit" id="btn-submit-order" class="btn-primary" style="width: 100%; justify-content: center; padding: 1rem; font-size: 1.05rem;">
+                                <span>Place Verified Order</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+
+                            <div style="margin-top: 1.25rem; font-size: 0.775rem; color: var(--text-muted); text-align: center; line-height: 1.5;">
+                                By placing this order, you agree to NEXORA's Official Hardware Warranty and 7-day hassle-free replacement terms.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- ================= ORDER SUCCESS CONFIRMATION MODAL / SECTION ================= -->
+        <div class="container" id="order-success-container" style="display: none; padding-top: 2rem;">
+            <div class="order-success-dialog">
+                <div class="success-icon-box">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span class="badge-tech" style="margin-bottom: 0.75rem;">Order Verified & Stored</span>
+                <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">
+                    Thank You for Your Order!
+                </h2>
+                <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.75rem;">
+                    Your authentic hardware order has been successfully placed and transmitted to the NEXORA dispatch center & Supabase database.
+                </p>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; text-align: left; margin-bottom: 2rem; font-size: 0.9rem;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="color: #64748b;">Order Tracking Number:</span>
+                        <strong id="success-order-num" style="color: #2563eb; font-family: monospace; font-size: 1.05rem;">NEX-00000</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="color: #64748b;">Customer Name:</span>
+                        <strong id="success-cust-name">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="color: #64748b;">Payment Method:</span>
+                        <strong id="success-payment-method" style="text-transform: capitalize;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
+                        <span style="color: #64748b;">Total Amount:</span>
+                        <strong id="success-total" style="color: #0f172a; font-size: 1.1rem; font-weight: 800;">-</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #64748b;">Delivery Destination:</span>
+                        <span id="success-address" style="text-align: right; max-width: 60%; font-weight: 600;">-</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                    <a href="index.html" class="btn-primary" style="padding: 0.85rem 1.75rem;">
+                        <span>Continue Shopping</span>
+                    </a>
+                    <a href="admin.html" class="btn-outline" style="padding: 0.85rem 1.75rem;">
+                        <span>View in Admin Orders</span>
+                    </a>
+                    <button onclick="window.print()" class="btn-outline" style="padding: 0.85rem 1.25rem;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span>Print Invoice</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/supabase-config.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/checkout.js"></script>
+</body>
+</html>

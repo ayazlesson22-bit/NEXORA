@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXORA Admin | Hardware Catalog & Orders Management</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232563eb'><path d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/></svg>">
+
+    <!-- Supabase JS Client v2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+    <!-- ================= ADMIN HEADER ================= -->
+    <header class="admin-header">
+        <div class="container admin-header-inner">
+            <div class="admin-title-badge">
+                <a href="index.html" class="brand-logo">
+                    <div class="brand-icon-box">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
+                    <div class="brand-text">NEX<span>ORA</span></div>
+                </a>
+                <span class="admin-tag">Admin Control Center</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Supabase Live Status -->
+                <div class="supabase-status-pill online" id="supabase-pill">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                    <span id="supabase-status-label">Supabase Connected: mlhgxsdjigumwwiukxnu</span>
+                </div>
+
+                <a href="index.html" class="btn-outline" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    <span>View Storefront</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= ADMIN MAIN ================= -->
+    <main class="admin-container">
+        
+        <!-- Database Notice Helper Banner -->
+        <div id="supabase-helper-banner" style="background: #eff6ff; border: 1.5px solid #93c5fd; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h4 style="font-size: 1rem; font-weight: 800; color: #1e40af; margin-bottom: 0.25rem;">
+                    🚀 Supabase Cloud Database: Clean & Live
+                </h4>
+                <p style="font-size: 0.85rem; color: #3b82f6;">
+                    API Project ID: <code>mlhgxsdjigumwwiukxnu</code>. All pre-set products have been removed. Add your own custom products or clear the database anytime.
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+                <button onclick="clearAllProductsFromSupabase()" class="btn-outline" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; color: #dc2626; border-color: #fca5a5; background: #fff;" id="btn-clear-supabase">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <span>Delete All Products from Supabase</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total Real Tech Models</span>
+                <span class="stat-val" id="stat-products-count">12</span>
+                <span class="stat-sub">100% Genuine Hardware</span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Total Customer Orders</span>
+                <span class="stat-val" id="stat-orders-count">0</span>
+                <span class="stat-sub">Local & Global Dispatches</span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Total Sales (PKR)</span>
+                <span class="stat-val" id="stat-sales-pkr">PKR 0</span>
+                <span class="stat-sub">Gross Revenue</span>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Total Sales (USD)</span>
+                <span class="stat-val" id="stat-sales-usd">$0.00</span>
+                <span class="stat-sub">International Orders</span>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs & Actions Toolbar -->
+        <div class="admin-toolbar">
+            <div class="admin-nav-tabs">
+                <button class="admin-tab-btn active" id="tab-btn-products" onclick="switchAdminTab('products')">
+                    📦 Tech Products Catalog
+                </button>
+                <button class="admin-tab-btn" id="tab-btn-orders" onclick="switchAdminTab('orders')">
+                    📋 Customer Orders & Tracking
+                </button>
+            </div>
+
+            <div class="admin-actions-group">
+                <button class="btn-outline" onclick="refreshAdminData()" style="padding: 0.6rem 1rem; font-size: 0.85rem;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <span>Refresh</span>
+                </button>
+                <button class="btn-primary" onclick="openAddProductModal()" style="padding: 0.6rem 1.25rem; font-size: 0.85rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Add Real Tech Product</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 1: PRODUCTS INVENTORY ================= -->
+        <div class="admin-panel-card" id="panel-products-section">
+            <div class="panel-header">
+                <h3 class="panel-title">Real Tech Hardware Inventory</h3>
+                <div style="font-size: 0.85rem; color: #64748b;">
+                    Synced with Supabase <code>public.products</code>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Hardware Product</th>
+                            <th>Brand</th>
+                            <th>Category</th>
+                            <th>Price (PKR)</th>
+                            <th>Price (USD)</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-products-tbody">
+                        <!-- Populated dynamically via admin.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ================= SECTION 2: CUSTOMER ORDERS ================= -->
+        <div class="admin-panel-card" id="panel-orders-section" style="display: none;">
+            <div class="panel-header">
+                <h3 class="panel-title">Customer Orders & Real-time Status</h3>
+                <div style="font-size: 0.85rem; color: #64748b;">
+                    Synced with Supabase <code>public.orders</code>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Items Purchased</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Payment Ref</th>
+                            <th>Order Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-orders-tbody">
+                        <!-- Populated dynamically via admin.js -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ================= ADD / EDIT PRODUCT MODAL ================= -->
+    <div class="admin-modal" id="product-form-modal">
+        <div class="admin-modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem;">
+                <h3 id="form-modal-title" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 800;">
+                    Add Real Tech Product
+                </h3>
+                <button onclick="closeProductFormModal()" style="color: #94a3b8; font-size: 1.5rem;">&times;</button>
+            </div>
+
+            <form id="product-admin-form" onsubmit="handleSaveProduct(event)">
+                <input type="hidden" id="edit-prod-id" value="">
+
+                <div class="form-group">
+                    <label for="prod-name">Product Name & Model *</label>
+                    <input type="text" id="prod-name" class="form-control" placeholder="e.g. Flagship Laptop / Device Name" required>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="prod-brand">Brand *</label>
+                        <input type="text" id="prod-brand" class="form-control" placeholder="e.g. Brand Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-category">Category *</label>
+                        <select id="prod-category" class="form-control" required>
+                            <option value="Laptops">Laptops</option>
+                            <option value="Smartphones">Smartphones</option>
+                            <option value="Audio">Audio</option>
+                            <option value="Tablets">Tablets</option>
+                            <option value="Monitors">Monitors</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Gaming">Gaming</option>
+                            <option value="Drones & Cameras">Drones & Cameras</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="prod-price-pkr">Price in PKR (₨) *</label>
+                        <input type="number" id="prod-price-pkr" class="form-control" placeholder="975000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-price-usd">Price in USD ($) *</label>
+                        <input type="number" id="prod-price-usd" class="form-control" step="0.01" placeholder="3499.00" required>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label for="prod-stock">Stock Quantity *</label>
+                        <input type="number" id="prod-stock" class="form-control" value="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prod-badge">Badge Label</label>
+                        <input type="text" id="prod-badge" class="form-control" placeholder="e.g. Flagship M3 Max">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="prod-image">Product Image URL (High Definition Real Photo) *</label>
+                    <input type="url" id="prod-image" class="form-control" placeholder="https://images.unsplash.com/..." required>
+                </div>
+
+                <div class="form-group">
+                    <label for="prod-desc">Full Technical Description *</label>
+                    <textarea id="prod-desc" class="form-control" rows="3" placeholder="Accurate real-world hardware description..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="prod-specs">Hardware Specs (JSON format)</label>
+                    <textarea id="prod-specs" class="form-control" rows="3" placeholder='{"Processor": "M3 Max", "RAM": "36GB", "Storage": "1TB SSD"}'></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeProductFormModal()" class="btn-outline">Cancel</button>
+                    <button type="submit" class="btn-primary">Save to Supabase & Store</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/supabase-config.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
